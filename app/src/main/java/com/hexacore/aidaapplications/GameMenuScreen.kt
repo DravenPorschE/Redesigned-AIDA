@@ -1,0 +1,57 @@
+package com.hexacore.aidaapplications
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.Button
+import android.widget.LinearLayout
+import androidx.fragment.app.Fragment
+
+class GameMenuScreen : Fragment() {
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        val view = inflater.inflate(R.layout.game_menu_screen, container, false)
+
+        val offlineGamesButton: Button = view.findViewById(R.id.button_offline_games)
+        val offlineGamesLayout: LinearLayout = view.findViewById(R.id.layout_offline_games)
+
+        // Hide at start
+        offlineGamesLayout.visibility = View.GONE
+
+        offlineGamesButton.setOnClickListener {
+            offlineGamesLayout.visibility =
+                if (offlineGamesLayout.visibility == View.GONE) View.VISIBLE else View.GONE
+        }
+
+        val ticTacToeButton: Button = view.findViewById(R.id.button_tictactoe)
+        ticTacToeButton.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.main_content, TicTacToeScreen())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        val sudokuButton: Button = view.findViewById(R.id.button_sudoku)
+        sudokuButton.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.main_content, SudokuScreen())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        // Memory Game button (optional)
+        val memoryGameButton: Button = view.findViewById(R.id.button_memory_game)
+        memoryGameButton.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.main_content, MemoryGameScreen())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        return view
+    }
+}

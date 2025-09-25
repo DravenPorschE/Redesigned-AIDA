@@ -71,6 +71,13 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.main_content, DefaultScreen())
             .commit()
 
+        // ADD THIS BLOCK FOR GAME BUTTON
+        gameButton.setOnClickListener {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_content, GameMenuScreen())
+                .commit()
+        }
+
         /*
 
         Paano mag open ng app sa may main content na screen (Yung sa right side na screen)

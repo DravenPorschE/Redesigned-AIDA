@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="@android:color/white">
+
+    <Button
+        android:id="@+id/button_online_games"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Online Games"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#4CAF50"
+        android:textStyle="bold"/>
+
+    <Button
+        android:id="@+id/button_offline_games"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Offline Games"
+        android:textColor="@android:color/white"
+        android:backgroundTint="#FFA726"
+        android:layout_marginTop="16dp"
+        android:textStyle="bold"/>
+
+    <!-- Shown when Offline Games is clicked -->
+    <LinearLayout
+        android:id="@+id/layout_offline_games"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/offline_games_box"
+        android:visibility="gone"
+        android:layout_marginTop="16dp"
+        android:padding="12dp">
+
+        <Button
+            android:id="@+id/button_tictactoe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tic Tac Toe"
+            android:backgroundTint="#ECEFF1"
+            android:textColor="#263238"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/button_sudoku"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Sudoku"
+            android:backgroundTint="#ECEFF1"
+            android:textColor="#263238"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/button_memory_game"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Memory Game"
+            android:backgroundTint="#ECEFF1"
+            android:textColor="#263238"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+
+</LinearLayout>

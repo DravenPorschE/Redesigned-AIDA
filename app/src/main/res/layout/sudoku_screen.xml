@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white"
+    android:padding="18dp">
+
+    <TextView
+        android:id="@+id/text_title"
+        android:text="Sudoku"
+        android:textStyle="bold"
+        android:textSize="28sp"
+        android:textColor="#00E7A2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="Sudoku Title"/>
+
+    <!-- Difficulty is selected in dialog, so no Spinner here -->
+
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/sudoku_grid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:rowCount="9"
+        android:columnCount="9"
+        android:background="#B0BEC5"
+        android:layout_marginBottom="20dp"
+        android:contentDescription="Sudoku Grid"/>
+
+    <LinearLayout
+        android:id="@+id/number_selector"
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="Number Selector">
+        <!-- Number buttons will be added programmatically -->
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/button_check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check"
+        android:backgroundTint="#00E7A2"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="12dp"
+        android:contentDescription="Check Solution"/>
+
+    <LinearLayout
+        android:id="@+id/layout_result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#CCFFFFFF"
+        android:elevation="6dp"
+        android:padding="16dp"
+        android:visibility="gone"
+        android:contentDescription="Result Layout">
+
+        <TextView
+            android:id="@+id/text_result"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Congratulations!"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:textColor="#00E7A2"
+            android:layout_marginBottom="10dp"
+            android:contentDescription="Result Text"/>
+
+        <Button
+            android:id="@+id/button_play_again"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Play Again"
+            android:backgroundTint="#00E7A2"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Play Again"/>
+
+        <Button
+            android:id="@+id/button_choose_offline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Choose Offline Games"
+            android:backgroundTint="#26B39E"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Choose Offline Games"/>
+
+        <Button
+            android:id="@+id/button_main_menu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Back to Main Screen"
+            android:backgroundTint="#607D8B"
+            android:textColor="@android:color/white"
+            android:contentDescription="Back to Main Screen"/>
+    </LinearLayout>
+</LinearLayout>
