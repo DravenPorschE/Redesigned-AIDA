@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:id="@+id/main_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/aida_avatar"
+            android:layout_width="250dp"
+            android:layout_height="250dp"
+            android:src="@drawable/avatar_aida"
+            android:background="@android:color/transparent"/>
+
+        <TextView
+            android:id="@+id/command_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Say something..."
+            android:textSize="24sp"
+            android:gravity="center"/>
+
+    </LinearLayout>
+
+</LinearLayout>
