@@ -59,4 +59,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("com.google.android.flexbox:flexbox:3.0.0")
     implementation("androidx.gridlayout:gridlayout:1.0.0") // <-- This line enables GridLayout usage!
+
+    implementation("ai.picovoice:porcupine-android:3.0.3")
 }

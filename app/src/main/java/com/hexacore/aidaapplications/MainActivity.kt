@@ -1,29 +1,45 @@
 package com.hexacore.aidaapplications
 
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.MotionEvent
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var scrollSidePanel: ScrollView
     private lateinit var draggableButton: Button
-    private lateinit var draggableContainer: LinearLayout
     private lateinit var mainContentContainer: LinearLayout
 
-    private var sidePanelMinWidth = 130 // dp → converted later
-    private var sidePanelMaxWidth = 400 // dp → you can change this
-    private var lastX = 0f
 
+    private lateinit var mainContent: FrameLayout
+
+    private var sidePanelMinWidthDp = 130
+    private var sidePanelMaxWidthDp = 400
+    private var lastX = 0f
+    private var sidePanelMinWidth = 0
+    private var sidePanelMaxWidth = 0
+
+    private lateinit var wakeWordManager: WakeWordManager
+    private val RECORD_AUDIO_REQUEST = 100
+
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.main_activity)
@@ -37,14 +53,13 @@ class MainActivity : AppCompatActivity() {
 
         scrollSidePanel = findViewById(R.id.scroll_side_panel)
         draggableButton = findViewById(R.id.draggable_button)
-        draggableContainer = findViewById(R.id.draggable_button_container)
-        mainContentContainer = findViewById(R.id.main_content_container)
+        mainContent = findViewById(R.id.main_content)
 
-        // convert dp to pixels
-        sidePanelMinWidth = dpToPx(sidePanelMinWidth)
-        sidePanelMaxWidth = dpToPx(sidePanelMaxWidth)
+        sidePanelMinWidth = dpToPx(sidePanelMinWidthDp)
+        sidePanelMaxWidth = dpToPx(sidePanelMaxWidthDp)
 
-        draggableButton.setOnTouchListener { v, event ->
+        // Initialize draggable logic
+        draggableButton.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     lastX = event.rawX
@@ -52,13 +67,65 @@ class MainActivity : AppCompatActivity() {
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dx = event.rawX - lastX
-                    resizeSidePanel(dx)
+                    if (isPortrait()) {
+                        // Portrait: panel on right, drag left to show
+                        val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                        val panelWidth = scrollSidePanel.width.toFloat()
+
+                        // New X for draggable button
+                        var newButtonX = draggableButton.x + dx
+                        // Clamp button between (screenWidth - panelWidth - button width) and (screenWidth - button width)
+                        val minX = screenWidth - panelWidth - draggableButton.width
+                        val maxX = screenWidth - draggableButton.width
+                        newButtonX = newButtonX.coerceIn(minX, maxX)
+                        draggableButton.x = newButtonX
+
+                        // Panel X is button's right edge
+                        scrollSidePanel.x = newButtonX + draggableButton.width
+                    } else {
+                        // Landscape: resize panel width
+                        resizeSidePanel(dx)
+                    }
                     lastX = event.rawX
                     true
                 }
                 else -> false
             }
         }
+
+        // Optional click to toggle
+        draggableButton.setOnClickListener {
+            if (isPortrait()) {
+                val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                val panelWidth = scrollSidePanel.width.toFloat()
+                val fullyShownX = screenWidth - panelWidth - draggableButton.width
+                val fullyHiddenX = screenWidth - draggableButton.width
+                val targetButtonX = if (draggableButton.x > fullyShownX + 10f) fullyShownX else fullyHiddenX
+                draggableButton.animate().x(targetButtonX).setDuration(200).start()
+                scrollSidePanel.animate().x(targetButtonX + draggableButton.width).setDuration(200).start()
+            }
+        }
+
+        // Set initial positions
+        if (isPortrait()) {
+            scrollSidePanel.post {
+                val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+                val panelWidth = scrollSidePanel.width.toFloat()
+                val buttonWidth = draggableButton.width.toFloat()
+                val buttonHeight = draggableButton.height.toFloat()
+                val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+
+                // Place panel off-screen to the right
+                scrollSidePanel.x = screenWidth
+
+                // Place button just at left edge of panel
+                draggableButton.x = scrollSidePanel.x - buttonWidth
+
+                // Center button vertically
+                draggableButton.y = (screenHeight - buttonHeight) / 2
+            }
+        }
+
 
         val noteButton: ImageButton = findViewById(R.id.note_app_button)
         val alarmButton: ImageButton = findViewById(R.id.alarm_app_button)
@@ -73,6 +140,8 @@ class MainActivity : AppCompatActivity() {
 
         // ADD THIS BLOCK FOR GAME BUTTON
         gameButton.setOnClickListener {
+            resetSidePanel()
+
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_content, GameMenuScreen())
                 .commit()
@@ -109,9 +178,23 @@ class MainActivity : AppCompatActivity() {
 
 
          */
+
+        // Request microphone permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.RECORD_AUDIO),
+                RECORD_AUDIO_REQUEST
+            )
+        } else {
+            initWakeWord()
+        }
     }
+    // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
-        val layoutParams = scrollSidePanel.layoutParams as LinearLayout.LayoutParams
+        val layoutParams = scrollSidePanel.layoutParams
         var newWidth = layoutParams.width + dx.toInt()
 
         // clamp between min and max
@@ -121,10 +204,59 @@ class MainActivity : AppCompatActivity() {
         layoutParams.width = newWidth
         scrollSidePanel.layoutParams = layoutParams
         scrollSidePanel.requestLayout()
+
+        // Update draggable button position
+        val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
+        buttonParams.marginStart = newWidth
+        draggableButton.layoutParams = buttonParams
+    }
+
+    // Reset side panel
+    private fun resetSidePanel() {
+        val layoutParams = scrollSidePanel.layoutParams
+        layoutParams.width = sidePanelMinWidth
+        scrollSidePanel.layoutParams = layoutParams
+        scrollSidePanel.requestLayout()
     }
 
     private fun dpToPx(dp: Int): Int {
-        val density = resources.displayMetrics.density
-        return (dp * density).toInt()
+        return (dp * resources.displayMetrics.density).toInt()
+    }
+
+    private fun isPortrait(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    }
+
+    private fun initWakeWord() {
+        wakeWordManager = WakeWordManager(this)
+        wakeWordManager.initWakeWord()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        wakeWordManager.start()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        wakeWordManager.stop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        wakeWordManager.release()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == RECORD_AUDIO_REQUEST && grantResults.isNotEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        ) {
+            initWakeWord()
+        }
     }
 }
