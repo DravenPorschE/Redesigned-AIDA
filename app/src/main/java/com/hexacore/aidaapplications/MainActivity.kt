@@ -2,9 +2,14 @@ package com.hexacore.aidaapplications
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.FrameLayout
@@ -13,11 +18,13 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
 
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -26,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var scrollSidePanel: ScrollView
     private lateinit var draggableButton: Button
     private lateinit var mainContentContainer: LinearLayout
-
+    private lateinit var tts: TextToSpeech
 
     private lateinit var mainContent: FrameLayout
 
@@ -35,9 +42,12 @@ class MainActivity : AppCompatActivity() {
     private var lastX = 0f
     private var sidePanelMinWidth = 0
     private var sidePanelMaxWidth = 0
-
-    private lateinit var wakeWordManager: WakeWordManager
     private val RECORD_AUDIO_REQUEST = 100
+    private val REQUEST_CODE_SPEECH = 100
+    private var openGoogleSTT = false
+
+    private var isSpeaking = false
+    private lateinit var wakeWordManager: WakeWordManager
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +67,33 @@ class MainActivity : AppCompatActivity() {
 
         sidePanelMinWidth = dpToPx(sidePanelMinWidthDp)
         sidePanelMaxWidth = dpToPx(sidePanelMaxWidthDp)
+
+        // 🗣️ Text-to-Speech setup
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val result = tts.setLanguage(Locale.US)
+                if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    println("❌ TTS language not supported.")
+                } else {
+                    // ✅ Attach listener here
+                    tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                        override fun onStart(utteranceId: String?) {
+                            isSpeaking = true
+                        }
+
+                        override fun onDone(utteranceId: String?) {
+                            isSpeaking = false
+                        }
+
+                        override fun onError(utteranceId: String?) {
+                            isSpeaking = false
+                        }
+                    })
+                }
+            } else {
+                println("❌ TTS initialization failed.")
+            }
+        }
 
         // Initialize draggable logic
         draggableButton.setOnTouchListener { _, event ->
@@ -191,6 +228,18 @@ class MainActivity : AppCompatActivity() {
         } else {
             initWakeWord()
         }
+
+        // Initialize WakeWordManager with the wake word callback
+        wakeWordManager = WakeWordManager(this) {
+            runOnUiThread {
+                speakAndThenListen("I'm listening")
+            }
+        }
+        wakeWordManager.initWakeWord()
+        wakeWordManager.start()
+
+
+
     }
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
@@ -228,8 +277,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initWakeWord() {
-        wakeWordManager = WakeWordManager(this)
+        // Initialize WakeWordManager with the speechHelper
+        wakeWordManager = WakeWordManager(this) {
+            runOnUiThread {
+                speakAndThenListen("I'm listening")
+            }
+        }
         wakeWordManager.initWakeWord()
+        wakeWordManager.start()
     }
 
     override fun onResume() {
@@ -257,6 +312,53 @@ class MainActivity : AppCompatActivity() {
             grantResults[0] == PackageManager.PERMISSION_GRANTED
         ) {
             initWakeWord()
+        }
+    }
+
+    private fun speakAndThenListen(text: String) {
+        openGoogleSTT = true
+        if (::tts.isInitialized) {
+            tts.setPitch(1.0f)
+            tts.setSpeechRate(1.0f)
+            tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                override fun onStart(utteranceId: String?) { isSpeaking = true }
+                override fun onDone(utteranceId: String?) {
+                    isSpeaking = false
+                    runOnUiThread { startSpeechToText() }
+                }
+                override fun onError(utteranceId: String?) { isSpeaking = false }
+            })
+            tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
+        }
+    }
+
+
+    // MainActivity.kt
+    private fun startSpeechToText() {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something…")
+        }
+        try {
+            startActivityForResult(intent, REQUEST_CODE_SPEECH)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Speech recognition not supported", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == REQUEST_CODE_SPEECH && resultCode == RESULT_OK) {
+            val spokenText = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
+            spokenText?.let {
+                Toast.makeText(this, "You said: $it", Toast.LENGTH_SHORT).show()
+                // run your AIDA intent prediction logic here
+                // val (intent, confidence) = predictIntent(it)
+                // outputActionBasedOnIntent(intent, it)
+            }
         }
     }
 }

@@ -5,12 +5,14 @@ import android.widget.Toast
 import ai.picovoice.porcupine.PorcupineManager
 import java.io.File
 
-class WakeWordManager(private val context: Context) {
+class WakeWordManager(
+    private val context: Context,
+    private val onWakeWordDetectedCallback: () -> Unit
+) {
     private var porcupineManager: PorcupineManager? = null
 
     fun initWakeWord() {
         try {
-            // Copy keyword file from assets to internal storage
             val keywordFile = File(context.filesDir, "Hey-Aida_en_android_v3_0_0.ppn")
             if (!keywordFile.exists()) {
                 context.assets.open("Hey-Aida_en_android_v3_0_0.ppn").use { input ->
@@ -25,21 +27,11 @@ class WakeWordManager(private val context: Context) {
                 .setKeywordPath(keywordFile.absolutePath)
                 .setSensitivity(0.7f)
                 .build(context) {
-                    // Wake word detected → do logic here instead of MainActivity
-                    onWakeWordDetected()
+                    onWakeWordDetectedCallback() // call lambda
                 }
 
         } catch (e: Exception) {
             e.printStackTrace()
-        }
-    }
-
-    private fun onWakeWordDetected() {
-        // This is where you add the functions you want to trigger
-        // Example: Toast, open fragment, run logic, etc.
-        (context as? MainActivity)?.runOnUiThread {
-            Toast.makeText(context, "Wake word detected!", Toast.LENGTH_SHORT).show()
-
         }
     }
 
