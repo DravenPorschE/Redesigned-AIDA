@@ -1,1 +1,16 @@
-/build
+# Gradle files
+.gradle/
+build/
+
+# Local configuration
+local.properties
+
+# IDE files
+.idea/
+*.iml
+
+# Log files
+*.log
+
+# OS junk
+.DS_Store

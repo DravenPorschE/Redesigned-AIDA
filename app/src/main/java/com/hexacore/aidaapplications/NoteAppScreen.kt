@@ -15,6 +15,7 @@ class NoteAppScreen : Fragment() {
 
     private val notes = mutableListOf<Note>()
     private lateinit var noteAdapter: NoteAdapter
+    private val fileName = "notes.txt"
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -25,9 +26,12 @@ class NoteAppScreen : Fragment() {
         val recycler = root.findViewById<RecyclerView>(R.id.note_recycler)
         val addButton = root.findViewById<FloatingActionButton>(R.id.add_note_button)
 
+        loadNotes() // ✅ Load notes from file
+
         noteAdapter = NoteAdapter(notes) { pos ->
             notes.removeAt(pos)
             noteAdapter.notifyItemRemoved(pos)
+            saveNotes() // ✅ Save after delete
         }
 
         recycler.layoutManager = LinearLayoutManager(requireContext())
@@ -51,8 +55,38 @@ class NoteAppScreen : Fragment() {
                 val info = infoInput.text.toString()
                 notes.add(Note(title, info))
                 noteAdapter.notifyItemInserted(notes.size - 1)
+                saveNotes() // ✅ Save after adding
             }
             .setNegativeButton("Cancel", null)
             .show()
+    }
+
+    private fun saveNotes() {
+        val file = requireContext().getFileStreamPath(fileName)
+        file.printWriter().use { out ->
+            for (note in notes) {
+                // Store as "title||info" per line
+                out.println("${note.title}||${note.info}")
+            }
+        }
+    }
+
+    private fun loadNotes() {
+        val file = requireContext().getFileStreamPath(fileName)
+        if (file.exists()) {
+            file.bufferedReader().useLines { lines ->
+                lines.forEach { line ->
+                    val parts = line.split("||")
+                    if (parts.size == 2) {
+                        notes.add(Note(parts[0], parts[1]))
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        saveNotes() // ✅ Auto-save when app goes to background
     }
 }
