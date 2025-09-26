@@ -241,20 +241,31 @@ class MainActivity : AppCompatActivity() {
 
     // Reset side panel
     private fun resetSidePanel() {
-        // reset side panel
-        val layoutParams = scrollSidePanel.layoutParams
-        layoutParams.width = sidePanelMinWidth
-        scrollSidePanel.layoutParams = layoutParams
-        scrollSidePanel.requestLayout()
+        if (isPortrait()) {
+            val screenWidth = resources.displayMetrics.widthPixels.toFloat()
+            val buttonWidth = draggableButton.width.toFloat()
+            val panelWidth = scrollSidePanel.width.toFloat()
 
-        // reset draggable button
-        val button = findViewById<Button>(R.id.draggable_button)
-        button.translationX = 0f  // clears drag offset
-        val buttonParams = button.layoutParams as FrameLayout.LayoutParams
-        buttonParams.marginStart = sidePanelMinWidth
-        button.layoutParams = buttonParams
-        button.requestLayout()
+            // Reset panel fully hidden off-screen
+            scrollSidePanel.x = screenWidth
+
+            // Reset button just at edge of panel
+            draggableButton.x = scrollSidePanel.x - buttonWidth
+
+        } else {
+            // Landscape logic (resize panel + margin)
+            val layoutParams = scrollSidePanel.layoutParams
+            layoutParams.width = sidePanelMinWidth
+            scrollSidePanel.layoutParams = layoutParams
+            scrollSidePanel.requestLayout()
+
+            val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
+            buttonParams.marginStart = sidePanelMinWidth
+            draggableButton.layoutParams = buttonParams
+            draggableButton.translationX = 0f
+        }
     }
+
 
 
     private fun dpToPx(dp: Int): Int {
