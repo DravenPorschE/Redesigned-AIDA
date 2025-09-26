@@ -22,7 +22,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.core.view.WindowInsetsCompat
-
 import androidx.appcompat.app.AppCompatActivity
 import java.util.Locale
 import androidx.core.app.ActivityCompat
@@ -163,7 +162,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
         val noteButton: ImageButton = findViewById(R.id.note_app_button)
         val alarmButton: ImageButton = findViewById(R.id.alarm_app_button)
         val calendarButton: ImageButton = findViewById(R.id.calendar_app_button)
@@ -175,10 +173,17 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.main_content, DefaultScreen())
             .commit()
 
-        // ADD THIS BLOCK FOR GAME BUTTON
+        // 📝 Note Button
+        noteButton.setOnClickListener {
+            resetSidePanel()
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_content, NoteAppScreen())
+                .commit()
+        }
+
+        // 🎮 Game Button
         gameButton.setOnClickListener {
             resetSidePanel()
-
             supportFragmentManager.beginTransaction()
                 .replace(R.id.main_content, GameMenuScreen())
                 .commit()
@@ -191,38 +196,6 @@ class MainActivity : AppCompatActivity() {
                 .replace(R.id.main_content, NoteAppScreen())
                 .commit()
         }
-
-        /*
-
-        Paano mag open ng app sa may main content na screen (Yung sa right side na screen)
-
-        for example:
-
-        noteButton.setOnClickListener {
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_content, NoteAppScreen())
-                .commit()
-        }
-
-        yung "main_content" is yung papalitan ng bagong screen
-        yung "NoteApp()" is yung screen na ipapalit.
-
-        Kaya before mo gawin yan gawa ka muna ng dalawang file
-        Dun sa may app/kotlin+java/con.hexacore.aidapplications
-
-        right click ka dun and new > Kotlin Class file tapos ang name is for example NoteAppScreen
-
-        Tapos dun sa may layout na folder, gawa ka din ng another xml file and ang ilalagay na name is
-        something similar dun sa pag gagamitan mo, in this case ang name ng file is note_app.xml
-
-        yung code nung dalawang file is copy mo na lang yung sa may DefaultScreen at default_screen.xml
-
-        kasi similar functions lang din naman ang mangyayari, at yung mismong functionality ng note app
-        is ilalagay mo sa loob ng NoteAppScreen na file and yung magiging itsura ng Note app is nandun
-        sa may note_app.xml
-
-
-         */
 
         // Request microphone permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -245,10 +218,8 @@ class MainActivity : AppCompatActivity() {
         }
         wakeWordManager.initWakeWord()
         wakeWordManager.start()
-
-
-
     }
+
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
         val layoutParams = scrollSidePanel.layoutParams
@@ -349,7 +320,6 @@ class MainActivity : AppCompatActivity() {
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
         }
     }
-
 
     // MainActivity.kt
     private fun startSpeechToText() {
