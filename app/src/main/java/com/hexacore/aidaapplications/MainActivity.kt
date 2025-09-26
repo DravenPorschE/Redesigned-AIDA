@@ -270,11 +270,21 @@ class MainActivity : AppCompatActivity() {
 
     // Reset side panel
     private fun resetSidePanel() {
+        // reset side panel
         val layoutParams = scrollSidePanel.layoutParams
         layoutParams.width = sidePanelMinWidth
         scrollSidePanel.layoutParams = layoutParams
         scrollSidePanel.requestLayout()
+
+        // reset draggable button
+        val button = findViewById<Button>(R.id.draggable_button)
+        button.translationX = 0f  // clears drag offset
+        val buttonParams = button.layoutParams as FrameLayout.LayoutParams
+        buttonParams.marginStart = sidePanelMinWidth
+        button.layoutParams = buttonParams
+        button.requestLayout()
     }
+
 
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density).toInt()
