@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Default template colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
@@ -7,4 +8,10 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 🎨 Custom Note App colors -->
+    <color name="noteAccent">#00E7A2</color>
+    <color name="noteBackground">#F9FAFB</color>
+    <color name="noteTextPrimary">#111827</color>
+    <color name="noteTextSecondary">#374151</color>
 </resources>
