@@ -184,6 +184,14 @@ class MainActivity : AppCompatActivity() {
                 .commit()
         }
 
+        noteButton.setOnClickListener {
+            resetSidePanel()
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_content, NoteAppScreen())
+                .commit()
+        }
+
         /*
 
         Paano mag open ng app sa may main content na screen (Yung sa right side na screen)
