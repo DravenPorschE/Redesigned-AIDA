@@ -3,6 +3,7 @@ package com.hexacore.aidaapplications
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -10,6 +11,7 @@ import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.FrameLayout
@@ -27,6 +29,9 @@ import androidx.appcompat.app.AppCompatActivity
 import java.util.Locale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
+import java.nio.channels.FileChannel
 
 class MainActivity : AppCompatActivity() {
 
@@ -48,6 +53,12 @@ class MainActivity : AppCompatActivity() {
 
     private var isSpeaking = false
     private lateinit var wakeWordManager: WakeWordManager
+
+    private lateinit var tflite: Interpreter
+    private lateinit var words: List<String>
+    private lateinit var classes: List<String>
+
+    private var aidaResponses = arrayOf("What can i do for you today?", "How can i help you?", "What can i do for you?", "How can i assist you?", "What can i do today?", "How can i help you today?", "What can i do for today?", "How can i assist you today?", "What can i do today?")
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -240,14 +251,17 @@ class MainActivity : AppCompatActivity() {
         // Initialize WakeWordManager with the wake word callback
         wakeWordManager = WakeWordManager(this) {
             runOnUiThread {
-                speakAndThenListen("I'm listening")
+                speakAndThenListen(aidaResponses.random())
             }
         }
         wakeWordManager.initWakeWord()
         wakeWordManager.start()
 
-
-
+        initializeModel(this)
+        // Initialize Text-to-Speech once when the app starts
+        TTSManager.init(this) {
+            Log.d("TTS", "TextToSpeech initialized and ready")
+        }
     }
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
@@ -376,6 +390,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun loadJsonArray(context: Context, fileName: String): List<String> {
+        val jsonString = context.assets.open(fileName).bufferedReader().use { it.readText() }
+        return org.json.JSONArray(jsonString).let { array ->
+            List(array.length()) { i -> array.getString(i) }
+        }
+    }
+
+    fun initializeModel(context: Context) {
+        // Load model
+        val model = context.assets.open("intent_detection_model.tflite").use { input ->
+            input.readBytes()
+        }
+        val assetFileDescriptor = context.assets.openFd("intent_detection_model.tflite")
+        val fileInputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
+        val fileChannel = fileInputStream.channel
+        val startOffset = assetFileDescriptor.startOffset
+        val declaredLength = assetFileDescriptor.declaredLength
+        val modelBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+
+        tflite = Interpreter(modelBuffer)
+
+        // Load words and classes
+        words = loadJsonArray(context, "words.json")
+        classes = loadJsonArray(context, "classes.json")
+    }
+
+    fun predictIntent(sentence: String): Pair<String, Float> {
+        val input = preprocessInput(sentence)
+        val inputArray = arrayOf(input)
+        val output = Array(1) { FloatArray(classes.size) }
+
+        tflite.run(inputArray, output)
+
+        val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: 0
+        val confidence = output[0][maxIndex]
+
+        return classes[maxIndex] to confidence
+    }
+
+    fun preprocessInput(sentence: String): FloatArray {
+        val tokens = sentence
+            .lowercase(Locale.getDefault())
+            .replace("[!?.,]".toRegex(), "") // remove punctuation
+            .split(" ")
+
+        val bag = FloatArray(words.size) { 0f }
+        for ((i, word) in words.withIndex()) {
+            if (tokens.contains(word)) {
+                bag[i] = 1f
+            }
+        }
+
+        return bag
+    }
+
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -385,8 +455,10 @@ class MainActivity : AppCompatActivity() {
             spokenText?.let {
                 Toast.makeText(this, "You said: $it", Toast.LENGTH_SHORT).show()
                 // run your AIDA intent prediction logic here
-                // val (intent, confidence) = predictIntent(it)
-                // outputActionBasedOnIntent(intent, it)
+                val (intent, confidence) = predictIntent(it)
+
+                val outputAction = OutputAction(this)
+                outputAction.outputActionBasedOnIntent(intent, it)
             }
         }
     }
