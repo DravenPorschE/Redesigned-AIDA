@@ -10,6 +10,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
+    <!-- Side panel -->
+    <ScrollView
+        android:id="@+id/scroll_side_panel"
+        android:layout_width="130dp"
+        android:layout_height="match_parent"
+        android:background="#050505"
+        android:elevation="8dp">
         <!-- Side panel -->
         <ScrollView
             android:id="@+id/scroll_side_panel"
