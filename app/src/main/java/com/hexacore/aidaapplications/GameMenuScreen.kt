@@ -29,29 +29,27 @@ class GameMenuScreen : Fragment() {
 
         val ticTacToeButton: Button = view.findViewById(R.id.button_tictactoe)
         ticTacToeButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.main_content, TicTacToeScreen())
-                .addToBackStack(null)
-                .commit()
+            openGame(TicTacToeScreen())
         }
 
         val sudokuButton: Button = view.findViewById(R.id.button_sudoku)
         sudokuButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.main_content, SudokuScreen())
-                .addToBackStack(null)
-                .commit()
+            openGame(SudokuScreen())
         }
 
         // Memory Game button (optional)
         val memoryGameButton: Button = view.findViewById(R.id.button_memory_game)
         memoryGameButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .replace(R.id.main_content, MemoryGameScreen())
-                .addToBackStack(null)
-                .commit()
+            openGame(MemoryGameScreen())
         }
 
         return view
+    }
+
+    fun openGame(game: Fragment) {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.main_content, game)
+            .addToBackStack(null)
+            .commit()
     }
 }

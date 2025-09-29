@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/colorBackground">
+
+    <!-- ✅ Safe Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/colorPrimary"
+        app:title="Alarm Clock"
+        app:titleTextColor="?attr/colorOnPrimary" />
+
+    <!-- Countdown Title (BIG) -->
+    <TextView
+        android:id="@+id/alarm_header_countdown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Alarm in 14 hr 20 min"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="?attr/colorOnBackground"
+        android:layout_gravity="center"
+        android:layout_marginTop="12dp"/>
+
+    <!-- Exact Time -->
+    <TextView
+        android:id="@+id/alarm_header_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sat, Sep 27, 7:00 AM"
+        android:textSize="14sp"
+        android:textColor="?attr/colorOnSurface"
+        android:layout_marginTop="4dp"
+        android:layout_gravity="center"/>
+
+    <!-- RecyclerView -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/alarm_recycler"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:paddingLeft="50dp"
+        android:paddingRight="50dp"/>
+
+    <!-- Add Alarm Button -->
+    <Button
+        android:id="@+id/add_alarm_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Add Alarm"
+        android:textColor="?attr/colorOnPrimary"
+        android:backgroundTint="?attr/colorPrimary"/>
+</LinearLayout>

@@ -1,17 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Side panel -->
+    <!-- 🔔 Alarm Banner (Notification Strip) -->
+    <LinearLayout
+        android:id="@+id/alarm_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#CC333333"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:elevation="16dp"
+        android:visibility="gone"
+        android:layout_gravity="top">
+
+        <TextView
+            android:id="@+id/alarm_banner_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="⏰ Alarm is ringing!"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:ellipsize="end"
+            android:singleLine="true" />
+
+        <Button
+            android:id="@+id/alarm_banner_dismiss"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dismiss"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@android:color/holo_red_dark" />
+    </LinearLayout>
+
+    <!-- Main content always fills the screen -->
+    <LinearLayout
+        android:id="@+id/main_content_container"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <FrameLayout
+            android:id="@+id/main_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+    </LinearLayout>
+
+    <!-- Floating side panel (position handled in code) -->
     <ScrollView
         android:id="@+id/scroll_side_panel"
         android:layout_width="130dp"
         android:layout_height="match_parent"
         android:background="#050505"
-        android:elevation="8dp">
+        android:elevation="10dp"
+        android:layout_gravity="start">
 
-        <com.google.android.flexbox.FlexboxLayout
+
+    <com.google.android.flexbox.FlexboxLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/side_panel"
@@ -22,185 +70,181 @@
             app:justifyContent="center"
             app:alignItems="center">
 
-                <!-- Note App -->
-                <LinearLayout
-                    android:id="@+id/note_app_container"
-                    android:layout_width="wrap_content"
+            <!-- Note App -->
+            <LinearLayout
+                android:id="@+id/note_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/note_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/note_app_icon" />
+
+                <TextView
+                    android:id="@+id/note_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:text="Note App"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/note_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/note_app_icon" />
+            <!-- Alarm App -->
+            <LinearLayout
+                android:id="@+id/alarm_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/note_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Note App"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/alarm_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/alarm_app_icon"
+                    app:tint="@android:color/white" />
 
-                <!-- Alarm App -->
-                <LinearLayout
-                    android:id="@+id/alarm_app_container"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/alarm_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:text="Alarm App"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/alarm_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/alarm_app_icon" />
+            <!-- Calendar App -->
+            <LinearLayout
+                android:id="@+id/calendar_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/alarm_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Alarm App"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/calendar_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/calendar_app_icon" />
 
-                <!-- Calendar App -->
-                <LinearLayout
-                    android:id="@+id/calendar_app_container"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/calendar_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:text="Calendar App"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/calendar_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/calendar_app_icon" />
+            <!-- Meeting App -->
+            <LinearLayout
+                android:id="@+id/meeting_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/calendar_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Calendar App"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/meeting_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/meeting_app_icon" />
 
-                <!-- Meeting App -->
-                <LinearLayout
-                    android:id="@+id/meeting_app_container"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/meeting_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:text="Meeting App"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/meeting_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/meeting_app_icon" />
+            <!-- Game App -->
+            <LinearLayout
+                android:id="@+id/game_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/meeting_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Meeting App"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/game_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/game_app_icon" />
 
-                <!-- Game App -->
-                <LinearLayout
-                    android:id="@+id/game_app_container"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/game_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
+                    android:gravity="center"
+                    android:text="Game App"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/game_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/game_app_icon" />
+            <!-- Configure App -->
+            <LinearLayout
+                android:id="@+id/configure_app_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/game_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Game App"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                <ImageButton
+                    android:id="@+id/configure_app_button"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_marginBottom="10dp"
+                    android:background="@android:color/transparent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/configure_app_icon"
+                    app:tint="@android:color/white" />
 
-                <!-- Configure App -->
-                <LinearLayout
-                    android:id="@+id/configure_app_container"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/configure_app_label"
+                    android:layout_width="80dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="30dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <ImageButton
-                        android:id="@+id/configure_app_button"
-                        android:layout_width="50dp"
-                        android:layout_height="50dp"
-                        android:layout_marginBottom="10dp"
-                        android:background="@android:color/transparent"
-                        android:scaleType="fitCenter"
-                        android:src="@drawable/configure_app_icon" />
-
-                    <TextView
-                        android:id="@+id/configure_app_label"
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:gravity="center"
-                        android:text="Configure AIDA"
-                        android:textColor="@color/white" />
-                </LinearLayout>
+                    android:gravity="center"
+                    android:text="Configure AIDA"
+                    android:textColor="@color/white" />
+            </LinearLayout>
 
         </com.google.android.flexbox.FlexboxLayout>
     </ScrollView>
 
-    <!-- Main content -->
-    <FrameLayout
-        android:id="@+id/main_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="130dp" />
-
-    <!-- Draggable button outside side panel -->
+    <!-- Draggable Button (clean, positioned in code) -->
     <Button
         android:id="@+id/draggable_button"
         android:layout_width="50dp"
         android:layout_height="60dp"
-        android:layout_marginStart="130dp"
-        android:layout_gravity="start|center_vertical"
         android:text="☰"
-        android:elevation="12dp"/>
+        android:elevation="12dp"
+        android:layout_gravity="start|center_vertical"
+        android:layout_marginStart="130dp"/>
+
 </FrameLayout>
