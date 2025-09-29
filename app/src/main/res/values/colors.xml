@@ -30,7 +30,7 @@
     <color name="primary_green">#4CAF50</color> <!-- Material Green 500 -->
     <color name="primary_green_variant">#2E7D32</color> <!-- Material Green 800 -->
 
-    <!-- 🎨 Custom Note App colors -->
+    <!-- 🎨 Custom Note/Calendar colors -->
     <color name="noteAccent">#00E7A2</color>
     <color name="noteBackground">#F9FAFB</color>
     <color name="noteTextPrimary">#111827</color>

@@ -2,7 +2,6 @@ package com.hexacore.aidaapplications
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -17,16 +16,15 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.WindowInsetsCompat
-
 import androidx.appcompat.app.AppCompatActivity
-import java.util.Locale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.fragment.app.Fragment // <-- ADDED for openScreen()
+
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -163,7 +161,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-
         val noteButton: ImageButton = findViewById(R.id.note_app_button)
         val alarmButton: ImageButton = findViewById(R.id.alarm_app_button)
         val calendarButton: ImageButton = findViewById(R.id.calendar_app_button)
@@ -179,21 +176,34 @@ class MainActivity : AppCompatActivity() {
         gameButton.setOnClickListener {
             resetSidePanel()
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_content, GameMenuScreen())
-                .commit()
+            // ✅ use openScreen()
+            openScreen(GameMenuScreen())
         }
 
         noteButton.setOnClickListener {
             resetSidePanel()
 
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_content, NoteAppScreen())
-                .commit()
+            // ✅ use openScreen()
+            openScreen(NoteAppScreen())
+        }
+
+        // ADD THIS BLOCK FOR ALARM BUTTON
+        alarmButton.setOnClickListener {
+            resetSidePanel()
+
+            // ✅ use openScreen()
+            openScreen(AlarmAppScreen()) // <-- Make sure AlarmAppScreen.kt + alarm_app.xml exist
+        }
+
+        // ADD THIS BLOCK FOR CALENDAR BUTTON
+        calendarButton.setOnClickListener {
+            resetSidePanel()
+
+            // ✅ use openScreen()
+            openScreen(CalendarAppScreen()) // <-- Make sure CalendarAppScreen.kt + calendar_app.xml exist
         }
 
         /*
-
         Paano mag open ng app sa may main content na screen (Yung sa right side na screen)
 
         for example:
@@ -220,8 +230,6 @@ class MainActivity : AppCompatActivity() {
         kasi similar functions lang din naman ang mangyayari, at yung mismong functionality ng note app
         is ilalagay mo sa loob ng NoteAppScreen na file and yung magiging itsura ng Note app is nandun
         sa may note_app.xml
-
-
          */
 
         // Request microphone permission
@@ -245,10 +253,15 @@ class MainActivity : AppCompatActivity() {
         }
         wakeWordManager.initWakeWord()
         wakeWordManager.start()
-
-
-
     }
+
+    // ✅ ADDED: helper for OutputAction to call screens
+    fun openScreen(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_content, fragment)
+            .commit()
+    }
+
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
         val layoutParams = scrollSidePanel.layoutParams
@@ -294,8 +307,6 @@ class MainActivity : AppCompatActivity() {
             draggableButton.translationX = 0f
         }
     }
-
-
 
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density).toInt()
@@ -360,7 +371,6 @@ class MainActivity : AppCompatActivity() {
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
         }
     }
-
 
     // MainActivity.kt
     private fun startSpeechToText() {

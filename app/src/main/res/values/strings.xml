@@ -2,4 +2,26 @@
     <string name="app_name">AidaApplication</string>
     <string name="avatar_desc">Avatar</string>
 
+    <!-- Calendar Dialog Strings -->
+    <string name="selected_date">Selected Date</string>
+    <string name="enter_event_note">Enter event note</string>
+    <string name="add_event">Add Event</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Months for CalendarAppScreen -->
+    <string-array name="months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
 </resources>

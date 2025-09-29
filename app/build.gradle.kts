@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -58,11 +57,34 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("com.google.android.flexbox:flexbox:3.0.0")
-    implementation("androidx.gridlayout:gridlayout:1.0.0") // <-- This line enables GridLayout usage!
 
-    implementation("ai.picovoice:porcupine-android:3.0.3")
+    // UI & Layout
+    implementation("com.google.android.flexbox:flexbox:3.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2") // keep latest
     implementation("androidx.cardview:cardview:1.0.0")
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    implementation("androidx.gridlayout:gridlayout:1.0.0")
+    implementation("com.google.android.material:material:1.9.0")
+
+
+
+    implementation("com.google.android.material:material:<latest_version>")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("com.google.android.material:material:1.10.0")
+
+
+
+    // Google Material (keep latest)
     implementation("com.google.android.material:material:1.12.0")
+
+    // JSON
+    implementation("com.google.code.gson:gson:2.10.1")
+
+    // Voice
+    implementation("ai.picovoice:porcupine-android:3.0.3")
+
+    // TensorFlow
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
 }
