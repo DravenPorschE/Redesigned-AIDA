@@ -236,6 +236,8 @@ class MainActivity : AppCompatActivity() {
 
          */
 
+
+
         // Initialize WakeWordManager with the wake word callback
         wakeWordManager = WakeWordManager(this) {
             runOnUiThread {

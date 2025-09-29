@@ -21,7 +21,8 @@ class OutputAction(private val activity: MainActivity) {
             "open_games" -> {
                 TTSManager.speak(gameResponses.random())
 
-                activity.openScreen(GameMenuScreen())
+                activity.
+                openScreen(GameMenuScreen())
             }
 
             "play_tic_tac_toe" -> {
