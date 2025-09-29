@@ -7,16 +7,14 @@
     android:layout_height="match_parent"
     android:background="?attr/colorBackground">
 
-    <!-- Toolbar -->
+    <!-- ✅ Safe Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
         app:title="Alarm Clock"
-        app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Body1"
-        app:titleTextColor="?attr/colorOnPrimary"
-        app:navigationIcon="@drawable/ic_arrow_back" />
+        app:titleTextColor="?attr/colorOnPrimary" />
 
     <!-- Countdown Title (BIG) -->
     <TextView

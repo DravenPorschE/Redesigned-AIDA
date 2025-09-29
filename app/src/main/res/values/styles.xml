@@ -1,0 +1,23 @@
+<resources>
+    <style name="TicTacToeCell">
+        <item name="android:layout_width">70dp</item>
+        <item name="android:layout_height">70dp</item>
+        <item name="android:textSize">32sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:backgroundTint">#F2F2F2</item>
+        <item name="android:textColor">#00E7A2</item> <!-- Default to Player 1 color, will be updated in code -->
+        <item name="android:layout_margin">4dp</item>
+        <item name="android:elevation">2dp</item>
+    </style>
+
+    <style name="SudokuCell">
+        <item name="android:layout_width">38dp</item>
+        <item name="android:layout_height">38dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:backgroundTint">#F2F2F2</item>
+        <item name="android:textColor">#212121</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_margin">1.5dp</item>
+    </style>
+</resources>

@@ -2,16 +2,14 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/colorBackground">   <!-- ✅ theme-based background -->
+    android:layout_height="match_parent">
 
     <LinearLayout
         android:id="@+id/main_parent"
         android:orientation="vertical"
         android:gravity="center"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?attr/colorBackground">  <!-- ✅ theme-based too -->
+        android:layout_height="match_parent">
 
         <ImageView
             android:id="@+id/aida_avatar"
@@ -26,8 +24,8 @@
             android:layout_height="wrap_content"
             android:text="Say something..."
             android:textSize="24sp"
-            android:gravity="center"
-            android:textColor="?attr/colorOnBackground"/> <!-- ✅ theme-based text -->
+            android:gravity="center"/>
+
     </LinearLayout>
 
 </LinearLayout>

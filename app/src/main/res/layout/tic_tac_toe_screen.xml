@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@android:color/white"
+    android:padding="24dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Game Title -->
+    <TextView
+        android:id="@+id/text_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Tic Tac Toe"
+        android:textColor="#00E7A2"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- Game Description -->
+    <TextView
+        android:id="@+id/text_subtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="First to win 3 rounds wins the match!"
+        android:textColor="#757575"
+        android:textSize="15sp"
+        android:layout_marginBottom="18dp"/>
+
+    <!-- Player Scoreboard -->
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/text_player1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player 1 (X)"
+            android:textStyle="bold"
+            android:textColor="#00E7A2"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/text_score1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" 0"
+            android:textStyle="bold"
+            android:textColor="#00E7A2"
+            android:textSize="16sp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="20dp"/>
+
+        <TextView
+            android:id="@+id/text_vs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="vs"
+            android:textColor="#757575"
+            android:textSize="15sp"
+            android:layout_marginRight="20dp"/>
+
+        <TextView
+            android:id="@+id/text_player2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player 2 (O)"
+            android:textStyle="bold"
+            android:textColor="#26B39E"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/text_score2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" 0"
+            android:textStyle="bold"
+            android:textColor="#26B39E"
+            android:textSize="16sp"
+            android:layout_marginLeft="6dp"/>
+    </LinearLayout>
+
+    <!-- Current Turn Indicator -->
+    <TextView
+        android:id="@+id/text_turn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Player 1's turn (X)"
+        android:textSize="15sp"
+        android:textColor="#00E7A2"
+        android:layout_marginBottom="12dp"
+        android:textStyle="bold"/>
+
+    <!-- TicTacToe Grid -->
+    <GridLayout
+        android:id="@+id/grid"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:rowCount="3"
+        android:columnCount="3"
+        android:layout_marginBottom="18dp"
+        android:layout_marginTop="4dp">
+
+        <Button android:id="@+id/button00" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button01" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button02" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button10" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button11" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button12" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button20" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button21" style="@style/TicTacToeCell"/>
+        <Button android:id="@+id/button22" style="@style/TicTacToeCell"/>
+    </GridLayout>
+
+    <!-- Restart Game Button -->
+    <Button
+        android:id="@+id/button_restart_round"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Restart Round"
+        android:backgroundTint="#00E7A2"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="10dp"/>
+
+    <!-- Winner Dialog -->
+    <LinearLayout
+        android:id="@+id/layout_winner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        android:padding="14dp"
+        android:background="#CCFFFFFF"
+        android:elevation="6dp">
+
+        <TextView
+            android:id="@+id/text_winner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Player 1 Wins!"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:textColor="#00E7A2"
+            android:layout_marginBottom="10dp"/>
+
+        <Button
+            android:id="@+id/button_continue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Continue Game"
+            android:backgroundTint="#00E7A2"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_giveup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Give Up"
+            android:backgroundTint="#26B39E"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Match Winner Section (hidden by default) -->
+        <LinearLayout
+            android:id="@+id/layout_match_end"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/text_match_winner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Player 1 Wins the Match!"
+                android:textStyle="bold"
+                android:textSize="22sp"
+                android:textColor="#00E7A2"
+                android:layout_marginBottom="16dp"/>
+
+            <Button
+                android:id="@+id/button_play_again"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Play Again"
+                android:backgroundTint="#00E7A2"
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/button_choose_offline"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Choose Offline Games"
+                android:backgroundTint="#26B39E"
+                android:textColor="@android:color/white"
+                android:layout_marginBottom="8dp"/>
+
+            <Button
+                android:id="@+id/button_main_menu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Back to Main Screen"
+                android:backgroundTint="#607D8B"
+                android:textColor="@android:color/white"/>
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

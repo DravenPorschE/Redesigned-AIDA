@@ -1,17 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-        <!-- Needed for showing notifications on Android 13+ -->
-        <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Needed for showing notifications on Android 13+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-        <!-- Needed for scheduling alarms -->
-        <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Needed for scheduling alarms -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <!-- Keeps CPU running while alarm triggers -->
-        <uses-permission android:name="android.permission.WAKE_LOCK" />
-
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:icon="@mipmap/ic_launcher"
@@ -33,15 +34,17 @@
 
         <activity
             android:name=".MainActivity"
+
             android:exported="true"
             android:label="AidaApplication">
 
-            <intent-filter>
+        <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
         </activity>
+
 
     </application>
 

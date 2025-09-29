@@ -16,8 +16,15 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val alarmTime = intent?.getStringExtra("alarm_time")
 
+        // ✅ Use chosen ringtone (default = ringtone1)
+        val ringtoneId = intent?.getIntExtra("ringtoneId", R.raw.ringtone1) ?: R.raw.ringtone1
+
+        // stop previous sound if service restarts
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+
         // 🔊 Play alarm sound
-        mediaPlayer = MediaPlayer.create(this, R.raw.ringtone1)
+        mediaPlayer = MediaPlayer.create(this, ringtoneId)
         mediaPlayer?.isLooping = true
         mediaPlayer?.start()
 
@@ -46,7 +53,7 @@ class AlarmService : Service() {
             notificationManager.createNotificationChannel(channel)
         }
 
-        // 👉 PendingIntent for dismiss (uses our AlarmStopReceiver)
+        // 👉 PendingIntent for dismiss (uses AlarmStopReceiver)
         val dismissIntent = Intent(this, AlarmStopReceiver::class.java)
         val dismissPendingIntent = PendingIntent.getBroadcast(
             this, 0, dismissIntent,
@@ -56,11 +63,10 @@ class AlarmService : Service() {
         return NotificationCompat.Builder(this, channelId)
             .setContentTitle("Alarm")
             .setContentText(alarmTime ?: "Your alarm is ringing!")
-            .setSmallIcon(R.drawable.alarm_app_icon) // ✅ same as your alarm button
+            .setSmallIcon(R.drawable.alarm_app_icon)
             .setOngoing(true)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            // ✅ Only "Dismiss" button, no Snooze
             .addAction(0, "Dismiss", dismissPendingIntent)
             .build()
     }
