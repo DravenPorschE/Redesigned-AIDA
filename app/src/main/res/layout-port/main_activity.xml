@@ -1,40 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-    <!-- 🔔 Alarm Banner (Notification Strip) -->
-    <LinearLayout
-        android:id="@+id/alarm_banner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#CC333333"
-        android:orientation="horizontal"
-        android:padding="12dp"
-        android:elevation="16dp"
-        android:visibility="gone"
-        android:layout_gravity="top">
-
-        <TextView
-            android:id="@+id/alarm_banner_text"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="⏰ Alarm is ringing!"
-            android:textColor="@android:color/white"
-            android:textSize="16sp"
-            android:ellipsize="end"
-            android:singleLine="true" />
-
-        <Button
-            android:id="@+id/alarm_banner_dismiss"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Dismiss"
-            android:textColor="@android:color/white"
-            android:backgroundTint="@android:color/holo_red_dark" />
-    </LinearLayout>
 
     <!-- Main content always fills the screen -->
     <LinearLayout
@@ -49,17 +16,20 @@
             android:layout_height="match_parent"/>
     </LinearLayout>
 
-    <!-- Floating side panel (position handled in code) -->
+
+    <!-- Draggable button to control side panel -->
+
+    <!-- Floating side panel on the right -->
     <ScrollView
         android:id="@+id/scroll_side_panel"
         android:layout_width="130dp"
         android:layout_height="match_parent"
         android:background="#050505"
         android:elevation="10dp"
-        android:layout_gravity="start">
+        android:layout_gravity="end"
+        android:translationX="130dp"> <!-- start hidden -->
 
-
-    <com.google.android.flexbox.FlexboxLayout
+        <com.google.android.flexbox.FlexboxLayout
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/side_panel"
@@ -70,6 +40,7 @@
             app:justifyContent="center"
             app:alignItems="center">
 
+            <!-- All your buttons and labels (same as landscape) -->
             <!-- Note App -->
             <LinearLayout
                 android:id="@+id/note_app_container"
@@ -113,8 +84,7 @@
                     android:layout_marginBottom="10dp"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/alarm_app_icon"
-                    app:tint="@android:color/white" />
+                    android:src="@drawable/alarm_app_icon" />
 
                 <TextView
                     android:id="@+id/alarm_app_label"
@@ -222,8 +192,7 @@
                     android:layout_marginBottom="10dp"
                     android:background="@android:color/transparent"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/configure_app_icon"
-                    app:tint="@android:color/white" />
+                    android:src="@drawable/configure_app_icon" />
 
                 <TextView
                     android:id="@+id/configure_app_label"
@@ -236,15 +205,10 @@
 
         </com.google.android.flexbox.FlexboxLayout>
     </ScrollView>
-
-    <!-- Draggable Button (clean, positioned in code) -->
     <Button
         android:id="@+id/draggable_button"
         android:layout_width="50dp"
         android:layout_height="60dp"
         android:text="☰"
-        android:elevation="12dp"
-        android:layout_gravity="start|center_vertical"
-        android:layout_marginStart="130dp"/>
-
+        android:elevation="12dp"/>
 </FrameLayout>

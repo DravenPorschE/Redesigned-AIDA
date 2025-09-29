@@ -3,8 +3,10 @@ package com.hexacore.aidaapplications
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
@@ -13,11 +15,14 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,6 +35,7 @@ import java.util.Locale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import org.tensorflow.lite.Interpreter
 import java.io.FileInputStream
 import java.nio.channels.FileChannel
@@ -60,6 +66,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var classes: List<String>
 
     private var aidaResponses = arrayOf("What can i do for you today?", "How can i help you?", "What can i do for you?", "How can i assist you?", "What can i do today?", "How can i help you today?", "What can i do for today?", "How can i assist you today?", "What can i do today?")
+
+    // 🔔 Alarm banner
+    private lateinit var alarmBanner: LinearLayout
+    private lateinit var alarmBannerText: TextView
+    private lateinit var alarmBannerDismiss: Button
+
+    // Track whether panel is open
+    private var isPanelOpen = false
+
+    // Local broadcast receivers
+    private val alarmRingReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val message = intent?.getStringExtra("message") ?: "⏰ Alarm is ringing!"
+            runOnUiThread { showAlarmBanner(message) }
+        }
+    }
+    private val alarmDismissReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            runOnUiThread { hideAlarmBanner() }
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -159,7 +186,6 @@ class MainActivity : AppCompatActivity() {
         if (isPortrait()) {
             scrollSidePanel.post {
                 val screenWidth = resources.displayMetrics.widthPixels.toFloat()
-                val panelWidth = scrollSidePanel.width.toFloat()
                 val buttonWidth = draggableButton.width.toFloat()
                 val buttonHeight = draggableButton.height.toFloat()
                 val screenHeight = resources.displayMetrics.heightPixels.toFloat()
@@ -173,7 +199,26 @@ class MainActivity : AppCompatActivity() {
                 // Center button vertically
                 draggableButton.y = (screenHeight - buttonHeight) / 2
             }
+        } else {
+            scrollSidePanel.post {
+                // Hide panel (width = 0)
+                val layoutParams = scrollSidePanel.layoutParams
+                layoutParams.width = 0
+                scrollSidePanel.layoutParams = layoutParams
+                scrollSidePanel.requestLayout()
+
+                // Place button at the very left edge
+                val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
+                buttonParams.marginStart = 0
+                draggableButton.layoutParams = buttonParams
+
+                // Center button vertically
+                val buttonHeight = draggableButton.height.toFloat()
+                val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+                draggableButton.y = (screenHeight - buttonHeight) / 2
+            }
         }
+
 
 
         val noteButton: ImageButton = findViewById(R.id.note_app_button)
@@ -183,26 +228,16 @@ class MainActivity : AppCompatActivity() {
         val gameButton: ImageButton = findViewById(R.id.game_app_button)
         val configureButton: ImageButton = findViewById(R.id.configure_app_button)
 
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.main_content, DefaultScreen())
-            .commit()
-
-        // ADD THIS BLOCK FOR GAME BUTTON
-        gameButton.setOnClickListener {
-            resetSidePanel()
-
+        if (savedInstanceState == null) {
             supportFragmentManager.beginTransaction()
-                .replace(R.id.main_content, GameMenuScreen())
+                .replace(R.id.main_content, DefaultScreen())
                 .commit()
         }
 
-        noteButton.setOnClickListener {
-            resetSidePanel()
-
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.main_content, NoteAppScreen())
-                .commit()
-        }
+        gameButton.setOnClickListener { resetSidePanel(); replaceFragment(GameMenuScreen(), "GameMenu") }
+        noteButton.setOnClickListener { resetSidePanel(); replaceFragment(NoteAppScreen(), "Note") }
+        alarmButton.setOnClickListener { resetSidePanel(); replaceFragment(AlarmAppScreen(), "Alarm") }
+        configureButton.setOnClickListener { resetSidePanel(); replaceFragment(ConfigureAppScreen(), "Config") }
 
         /*
 
@@ -265,14 +300,34 @@ class MainActivity : AppCompatActivity() {
         } else {
             wakeWordManager.initWakeWord()
         }
+
+        // 🔔 alarm banner
+        alarmBanner = findViewById(R.id.alarm_banner)
+        alarmBannerText = findViewById(R.id.alarm_banner_text)
+        alarmBannerDismiss = findViewById(R.id.alarm_banner_dismiss)
+        alarmBanner.visibility = View.GONE
+
+        alarmBannerDismiss.setOnClickListener {
+            stopService(Intent(this, AlarmService::class.java))
+            LocalBroadcastManager.getInstance(this)
+                .sendBroadcast(Intent("com.hexacore.aidaapplications.ALARM_DISMISSED"))
+            hideAlarmBanner()
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            alarmRingReceiver, IntentFilter("com.hexacore.aidaapplications.ALARM_RINGING")
+        )
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            alarmDismissReceiver, IntentFilter("com.hexacore.aidaapplications.ALARM_DISMISSED")
+        )
     }
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
         val layoutParams = scrollSidePanel.layoutParams
         var newWidth = layoutParams.width + dx.toInt()
 
-        // clamp between min and max
-        if (newWidth < sidePanelMinWidth) newWidth = sidePanelMinWidth
+        // clamp between 0 and max
+        if (newWidth < 0) newWidth = 0
         if (newWidth > sidePanelMaxWidth) newWidth = sidePanelMaxWidth
 
         layoutParams.width = newWidth
@@ -285,12 +340,12 @@ class MainActivity : AppCompatActivity() {
         draggableButton.layoutParams = buttonParams
     }
 
+
     // Reset side panel
     fun resetSidePanel() {
         if (isPortrait()) {
             val screenWidth = resources.displayMetrics.widthPixels.toFloat()
             val buttonWidth = draggableButton.width.toFloat()
-            val panelWidth = scrollSidePanel.width.toFloat()
 
             // Reset panel fully hidden off-screen
             scrollSidePanel.x = screenWidth
@@ -299,20 +354,18 @@ class MainActivity : AppCompatActivity() {
             draggableButton.x = scrollSidePanel.x - buttonWidth
 
         } else {
-            // Landscape logic (resize panel + margin)
+            // Landscape: completely hide
             val layoutParams = scrollSidePanel.layoutParams
-            layoutParams.width = sidePanelMinWidth
+            layoutParams.width = 0
             scrollSidePanel.layoutParams = layoutParams
             scrollSidePanel.requestLayout()
 
             val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
-            buttonParams.marginStart = sidePanelMinWidth
+            buttonParams.marginStart = 0
             draggableButton.layoutParams = buttonParams
             draggableButton.translationX = 0f
         }
     }
-
-
 
     private fun dpToPx(dp: Int): Int {
         return (dp * resources.displayMetrics.density).toInt()
@@ -347,6 +400,23 @@ class MainActivity : AppCompatActivity() {
             grantResults[0] == PackageManager.PERMISSION_GRANTED
         ) {
             wakeWordManager.initWakeWord()
+        }
+    }
+
+    private fun showAlarmBanner(message: String) {
+        alarmBannerText.text = message
+        alarmBanner.visibility = View.VISIBLE
+        alarmBanner.post {
+            alarmBanner.translationY = -alarmBanner.height.toFloat()
+            alarmBanner.animate().translationY(0f).setDuration(300).start()
+        }
+    }
+    private fun hideAlarmBanner() {
+        alarmBanner.post {
+            alarmBanner.animate().translationY(-alarmBanner.height.toFloat()).setDuration(300).withEndAction {
+                alarmBanner.visibility = View.GONE
+                alarmBanner.translationY = 0f
+            }.start()
         }
     }
 
@@ -440,6 +510,13 @@ class MainActivity : AppCompatActivity() {
             val outputAction = OutputAction(this)
             outputAction.outputActionBasedOnIntent(intent, result?.get(0) ?: "")
         }
+    }
+
+    private fun replaceFragment(fragment: Fragment, tag: String) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_content, fragment, tag)
+            .addToBackStack(tag)
+            .commit()
     }
 
     fun openScreen(fragment: Fragment) {
