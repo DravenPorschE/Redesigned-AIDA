@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import com.google.android.material.chip.ChipGroup
-import com.google.android.material.appbar.MaterialToolbar
 import java.util.*
 import java.text.SimpleDateFormat
 
@@ -34,6 +33,7 @@ class AlarmAppScreen : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
+
     ): View? {
         val view = inflater.inflate(R.layout.alarm_app_screen, container, false)
 
@@ -55,9 +55,7 @@ class AlarmAppScreen : Fragment() {
             },
             onItemLongClick = { position -> showOptionsDialog(position) }
         )
-
-        // Handle toolbar back button
-        val toolbar = view.findViewById<MaterialToolbar>(R.id.toolbar)
+        val toolbar = view.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.toolbar)
         toolbar.setNavigationOnClickListener {
             requireActivity().supportFragmentManager.popBackStack()
         }
@@ -67,12 +65,11 @@ class AlarmAppScreen : Fragment() {
 
         addAlarmButton.setOnClickListener { showAddOrEditDialog(null) }
 
-        updateHeader() // Initial update
+        updateHeader() // initial update
 
         return view
     }
 
-    // Show Add/Edit Alarm dialog
     private fun showAddOrEditDialog(editIndex: Int?) {
         val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.add_alarm_dialog, null)
         val timeButton = dialogView.findViewById<Button>(R.id.btnPickTime)
@@ -148,7 +145,6 @@ class AlarmAppScreen : Fragment() {
         dialog.show()
     }
 
-    // Show options menu for each alarm item
     private fun showOptionsDialog(position: Int) {
         val options = arrayOf("Edit", "Delete")
         AlertDialog.Builder(requireContext())
@@ -186,7 +182,6 @@ class AlarmAppScreen : Fragment() {
         updateHeader()
     }
 
-    // Update header with countdown to next alarm
     private fun updateHeader() {
         val activeAlarms = alarms.filter { it.isEnabled }
         if (activeAlarms.isEmpty()) {
@@ -245,7 +240,6 @@ class AlarmAppScreen : Fragment() {
         else -> Calendar.MONDAY
     }
 
-    // Schedule an alarm with AlarmManager
     private fun scheduleAlarm(alarm: AlarmItem) {
         val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
@@ -299,7 +293,7 @@ class AlarmAppScreen : Fragment() {
         }
     }
 
-    // Cancel an alarm
+
     private fun cancelAlarm(alarm: AlarmItem) {
         val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
         for (day in alarm.repeatDays) {

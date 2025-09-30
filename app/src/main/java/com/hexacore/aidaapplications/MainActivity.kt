@@ -2,29 +2,43 @@ package com.hexacore.aidaapplications
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
+import android.util.Log
 import android.view.MotionEvent
+import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.WindowInsetsCompat
+
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.fragment.app.Fragment // <-- ADDED for openScreen()
-
-import java.util.Locale
+import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import org.tensorflow.lite.Interpreter
+import java.io.FileInputStream
+import java.nio.channels.FileChannel
 
 class MainActivity : AppCompatActivity() {
 
@@ -46,6 +60,33 @@ class MainActivity : AppCompatActivity() {
 
     private var isSpeaking = false
     private lateinit var wakeWordManager: WakeWordManager
+
+    private lateinit var tflite: Interpreter
+    private lateinit var words: List<String>
+    private lateinit var classes: List<String>
+
+    private var aidaResponses = arrayOf("What can i do for you today?", "How can i help you?", "What can i do for you?", "How can i assist you?", "What can i do today?", "How can i help you today?", "What can i do for today?", "How can i assist you today?", "What can i do today?")
+
+    // 🔔 Alarm banner
+    private lateinit var alarmBanner: LinearLayout
+    private lateinit var alarmBannerText: TextView
+    private lateinit var alarmBannerDismiss: Button
+
+    // Track whether panel is open
+    private var isPanelOpen = false
+
+    // Local broadcast receivers
+    private val alarmRingReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val message = intent?.getStringExtra("message") ?: "⏰ Alarm is ringing!"
+            runOnUiThread { showAlarmBanner(message) }
+        }
+    }
+    private val alarmDismissReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            runOnUiThread { hideAlarmBanner() }
+        }
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,40 +134,59 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Initialize draggable logic
-        draggableButton.setOnTouchListener { _, event ->
+        var isDragging = false
+
+        draggableButton.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     lastX = event.rawX
+                    isDragging = false
+
+                    // Always reset to full opacity when touched
+                    draggableButton.animate().alpha(1f).setDuration(100).start()
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    isDragging = true
+
+                    // Keep button fully visible while dragging
+                    if (draggableButton.alpha != 1f) {
+                        draggableButton.alpha = 1f
+                    }
+
                     val dx = event.rawX - lastX
                     if (isPortrait()) {
-                        // Portrait: panel on right, drag left to show
                         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
                         val panelWidth = scrollSidePanel.width.toFloat()
-
-                        // New X for draggable button
                         var newButtonX = draggableButton.x + dx
-                        // Clamp button between (screenWidth - panelWidth - button width) and (screenWidth - button width)
                         val minX = screenWidth - panelWidth - draggableButton.width
                         val maxX = screenWidth - draggableButton.width
                         newButtonX = newButtonX.coerceIn(minX, maxX)
                         draggableButton.x = newButtonX
-
-                        // Panel X is button's right edge
                         scrollSidePanel.x = newButtonX + draggableButton.width
                     } else {
-                        // Landscape: resize panel width
                         resizeSidePanel(dx)
                     }
                     lastX = event.rawX
                     true
                 }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (!isDragging) {
+                        v.performClick()
+                    }
+
+                    // Fade back after 1s
+                    draggableButton.animate()
+                        .alpha(0.4f)
+                        .setStartDelay(1000)
+                        .setDuration(500)
+                        .start()
+                    true
+                }
                 else -> false
             }
         }
+
 
         // Optional click to toggle
         draggableButton.setOnClickListener {
@@ -145,7 +205,6 @@ class MainActivity : AppCompatActivity() {
         if (isPortrait()) {
             scrollSidePanel.post {
                 val screenWidth = resources.displayMetrics.widthPixels.toFloat()
-                val panelWidth = scrollSidePanel.width.toFloat()
                 val buttonWidth = draggableButton.width.toFloat()
                 val buttonHeight = draggableButton.height.toFloat()
                 val screenHeight = resources.displayMetrics.heightPixels.toFloat()
@@ -159,7 +218,27 @@ class MainActivity : AppCompatActivity() {
                 // Center button vertically
                 draggableButton.y = (screenHeight - buttonHeight) / 2
             }
+        } else {
+            scrollSidePanel.post {
+                // Hide panel (width = 0)
+                val layoutParams = scrollSidePanel.layoutParams
+                layoutParams.width = 0
+                scrollSidePanel.layoutParams = layoutParams
+                scrollSidePanel.requestLayout()
+
+                // Place button at the very left edge
+                val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
+                buttonParams.marginStart = 0
+                draggableButton.layoutParams = buttonParams
+
+                // Center button vertically
+                val buttonHeight = draggableButton.height.toFloat()
+                val screenHeight = resources.displayMetrics.heightPixels.toFloat()
+                draggableButton.y = (screenHeight - buttonHeight) / 2
+            }
         }
+
+
 
         val noteButton: ImageButton = findViewById(R.id.note_app_button)
         val alarmButton: ImageButton = findViewById(R.id.alarm_app_button)
@@ -168,42 +247,20 @@ class MainActivity : AppCompatActivity() {
         val gameButton: ImageButton = findViewById(R.id.game_app_button)
         val configureButton: ImageButton = findViewById(R.id.configure_app_button)
 
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.main_content, DefaultScreen())
-            .commit()
-
-        // ADD THIS BLOCK FOR GAME BUTTON
-        gameButton.setOnClickListener {
-            resetSidePanel()
-
-            // ✅ use openScreen()
-            openScreen(GameMenuScreen())
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.main_content, DefaultScreen())
+                .commit()
         }
 
-        noteButton.setOnClickListener {
-            resetSidePanel()
-
-            // ✅ use openScreen()
-            openScreen(NoteAppScreen())
-        }
-
-        // ADD THIS BLOCK FOR ALARM BUTTON
-        alarmButton.setOnClickListener {
-            resetSidePanel()
-
-            // ✅ use openScreen()
-            openScreen(AlarmAppScreen()) // <-- Make sure AlarmAppScreen.kt + alarm_app.xml exist
-        }
-
-        // ADD THIS BLOCK FOR CALENDAR BUTTON
-        calendarButton.setOnClickListener {
-            resetSidePanel()
-
-            // ✅ use openScreen()
-            openScreen(CalendarAppScreen()) // <-- Make sure CalendarAppScreen.kt + calendar_app.xml exist
-        }
+        gameButton.setOnClickListener { resetSidePanel(); replaceFragment(GameMenuScreen(), "GameMenu") }
+        noteButton.setOnClickListener { resetSidePanel(); replaceFragment(NoteAppScreen(), "Note") }
+        alarmButton.setOnClickListener { resetSidePanel(); replaceFragment(AlarmAppScreen(), "Alarm") }
+        configureButton.setOnClickListener { resetSidePanel(); replaceFragment(ConfigureAppScreen(), "Config") }
+        calendarButton.setOnClickListener { resetSidePanel(); replaceFragment(CalendarAppScreen(), "Calendar") }
 
         /*
+
         Paano mag open ng app sa may main content na screen (Yung sa right side na screen)
 
         for example:
@@ -230,7 +287,26 @@ class MainActivity : AppCompatActivity() {
         kasi similar functions lang din naman ang mangyayari, at yung mismong functionality ng note app
         is ilalagay mo sa loob ng NoteAppScreen na file and yung magiging itsura ng Note app is nandun
         sa may note_app.xml
+
+
          */
+
+
+
+        // Initialize WakeWordManager with the wake word callback
+        wakeWordManager = WakeWordManager(this) {
+            runOnUiThread {
+                speakAndThenListen(aidaResponses.random())
+            }
+        }
+        wakeWordManager.initWakeWord()
+        wakeWordManager.start()
+
+        initializeModel(this)
+        // Initialize Text-to-Speech once when the app starts
+        TTSManager.init(this) {
+            Log.d("TTS", "TextToSpeech initialized and ready")
+        }
 
         // Request microphone permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -242,33 +318,36 @@ class MainActivity : AppCompatActivity() {
                 RECORD_AUDIO_REQUEST
             )
         } else {
-            initWakeWord()
+            wakeWordManager.initWakeWord()
         }
 
-        // Initialize WakeWordManager with the wake word callback
-        wakeWordManager = WakeWordManager(this) {
-            runOnUiThread {
-                speakAndThenListen("I'm listening")
-            }
+        // 🔔 alarm banner
+        alarmBanner = findViewById(R.id.alarm_banner)
+        alarmBannerText = findViewById(R.id.alarm_banner_text)
+        alarmBannerDismiss = findViewById(R.id.alarm_banner_dismiss)
+        alarmBanner.visibility = View.GONE
+
+        alarmBannerDismiss.setOnClickListener {
+            stopService(Intent(this, AlarmService::class.java))
+            LocalBroadcastManager.getInstance(this)
+                .sendBroadcast(Intent("com.hexacore.aidaapplications.ALARM_DISMISSED"))
+            hideAlarmBanner()
         }
-        wakeWordManager.initWakeWord()
-        wakeWordManager.start()
-    }
 
-    // ✅ ADDED: helper for OutputAction to call screens
-    fun openScreen(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.main_content, fragment)
-            .commit()
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            alarmRingReceiver, IntentFilter("com.hexacore.aidaapplications.ALARM_RINGING")
+        )
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            alarmDismissReceiver, IntentFilter("com.hexacore.aidaapplications.ALARM_DISMISSED")
+        )
     }
-
     // Resize panel in landscape
     private fun resizeSidePanel(dx: Float) {
         val layoutParams = scrollSidePanel.layoutParams
         var newWidth = layoutParams.width + dx.toInt()
 
-        // clamp between min and max
-        if (newWidth < sidePanelMinWidth) newWidth = sidePanelMinWidth
+        // clamp between 0 and max
+        if (newWidth < 0) newWidth = 0
         if (newWidth > sidePanelMaxWidth) newWidth = sidePanelMaxWidth
 
         layoutParams.width = newWidth
@@ -281,12 +360,12 @@ class MainActivity : AppCompatActivity() {
         draggableButton.layoutParams = buttonParams
     }
 
+
     // Reset side panel
-    private fun resetSidePanel() {
+    fun resetSidePanel() {
         if (isPortrait()) {
             val screenWidth = resources.displayMetrics.widthPixels.toFloat()
             val buttonWidth = draggableButton.width.toFloat()
-            val panelWidth = scrollSidePanel.width.toFloat()
 
             // Reset panel fully hidden off-screen
             scrollSidePanel.x = screenWidth
@@ -295,14 +374,14 @@ class MainActivity : AppCompatActivity() {
             draggableButton.x = scrollSidePanel.x - buttonWidth
 
         } else {
-            // Landscape logic (resize panel + margin)
+            // Landscape: completely hide
             val layoutParams = scrollSidePanel.layoutParams
-            layoutParams.width = sidePanelMinWidth
+            layoutParams.width = 0
             scrollSidePanel.layoutParams = layoutParams
             scrollSidePanel.requestLayout()
 
             val buttonParams = draggableButton.layoutParams as FrameLayout.LayoutParams
-            buttonParams.marginStart = sidePanelMinWidth
+            buttonParams.marginStart = 0
             draggableButton.layoutParams = buttonParams
             draggableButton.translationX = 0f
         }
@@ -314,17 +393,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun isPortrait(): Boolean {
         return resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-    }
-
-    private fun initWakeWord() {
-        // Initialize WakeWordManager with the speechHelper
-        wakeWordManager = WakeWordManager(this) {
-            runOnUiThread {
-                speakAndThenListen("I'm listening")
-            }
-        }
-        wakeWordManager.initWakeWord()
-        wakeWordManager.start()
     }
 
     override fun onResume() {
@@ -351,7 +419,24 @@ class MainActivity : AppCompatActivity() {
         if (requestCode == RECORD_AUDIO_REQUEST && grantResults.isNotEmpty() &&
             grantResults[0] == PackageManager.PERMISSION_GRANTED
         ) {
-            initWakeWord()
+            wakeWordManager.initWakeWord()
+        }
+    }
+
+    private fun showAlarmBanner(message: String) {
+        alarmBannerText.text = message
+        alarmBanner.visibility = View.VISIBLE
+        alarmBanner.post {
+            alarmBanner.translationY = -alarmBanner.height.toFloat()
+            alarmBanner.animate().translationY(0f).setDuration(300).start()
+        }
+    }
+    private fun hideAlarmBanner() {
+        alarmBanner.post {
+            alarmBanner.animate().translationY(-alarmBanner.height.toFloat()).setDuration(300).withEndAction {
+                alarmBanner.visibility = View.GONE
+                alarmBanner.translationY = 0f
+            }.start()
         }
     }
 
@@ -372,32 +457,92 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
     // MainActivity.kt
     private fun startSpeechToText() {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "Say something…")
-        }
-        try {
-            startActivityForResult(intent, REQUEST_CODE_SPEECH)
-        } catch (e: Exception) {
-            Toast.makeText(this, "Speech recognition not supported", Toast.LENGTH_SHORT).show()
+        GoogleSTT(this).askSpeechInput()
+    }
+
+    fun loadJsonArray(context: Context, fileName: String): List<String> {
+        val jsonString = context.assets.open(fileName).bufferedReader().use { it.readText() }
+        return org.json.JSONArray(jsonString).let { array ->
+            List(array.length()) { i -> array.getString(i) }
         }
     }
 
-    @Deprecated("Deprecated in Java")
+    fun initializeModel(context: Context) {
+        // Load model
+        val model = context.assets.open("intent_detection_model.tflite").use { input ->
+            input.readBytes()
+        }
+        val assetFileDescriptor = context.assets.openFd("intent_detection_model.tflite")
+        val fileInputStream = FileInputStream(assetFileDescriptor.fileDescriptor)
+        val fileChannel = fileInputStream.channel
+        val startOffset = assetFileDescriptor.startOffset
+        val declaredLength = assetFileDescriptor.declaredLength
+        val modelBuffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength)
+
+        tflite = Interpreter(modelBuffer)
+
+        // Load words and classes
+        words = loadJsonArray(context, "words.json")
+        classes = loadJsonArray(context, "classes.json")
+    }
+
+    fun predictIntent(sentence: String): Pair<String, Float> {
+        val input = preprocessInput(sentence)
+        val inputArray = arrayOf(input)
+        val output = Array(1) { FloatArray(classes.size) }
+
+        tflite.run(inputArray, output)
+
+        val maxIndex = output[0].indices.maxByOrNull { output[0][it] } ?: 0
+        val confidence = output[0][maxIndex]
+
+        return classes[maxIndex] to confidence
+    }
+
+    fun preprocessInput(sentence: String): FloatArray {
+        val tokens = sentence
+            .lowercase(Locale.getDefault())
+            .replace("[!?.,]".toRegex(), "") // remove punctuation
+            .split(" ")
+
+        val bag = FloatArray(words.size) { 0f }
+        for ((i, word) in words.withIndex()) {
+            if (tokens.contains(word)) {
+                bag[i] = 1f
+            }
+        }
+
+        return bag
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == REQUEST_CODE_SPEECH && resultCode == RESULT_OK) {
-            val spokenText = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
-            spokenText?.let {
-                Toast.makeText(this, "You said: $it", Toast.LENGTH_SHORT).show()
-                // run your AIDA intent prediction logic here
-                // val (intent, confidence) = predictIntent(it)
-                // outputActionBasedOnIntent(intent, it)
-            }
+        if (requestCode == 102 && resultCode == Activity.RESULT_OK) {
+            val result = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)
+            //Toast.makeText(this, "You said: ${result?.get(0)}", Toast.LENGTH_SHORT).show()
+
+            val (intent, confidence) = predictIntent(result?.get(0) ?: "")
+
+            val outputAction = OutputAction(this)
+            outputAction.outputActionBasedOnIntent(intent, result?.get(0) ?: "")
         }
     }
+
+    private fun replaceFragment(fragment: Fragment, tag: String) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_content, fragment, tag)
+            .addToBackStack(tag)
+            .commit()
+    }
+
+    fun openScreen(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.main_content, fragment)
+            .commit()
+    }
+
 }

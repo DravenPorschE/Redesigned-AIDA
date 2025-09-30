@@ -1,28 +1,28 @@
 package com.hexacore.aidaapplications
 
+import android.content.Context
+import android.speech.tts.TextToSpeech
 import android.util.Log
+import java.util.Locale
 
 class OutputAction(private val activity: MainActivity) {
 
-    private val gameResponses = arrayOf(
-        "Okay. Let's play a game",
-        "Okay. I accept your challenge",
-        "Sure, here are the games available"
-    )
+    var gameResponses = arrayOf("Okay. Lets play a game", "Okay. I Accept your challenge", "Sure, here are the games available")
 
     fun outputActionBasedOnIntent(intent: String, speech: String) {
         Log.d("AIDA_INTENT", "Predicted intent: $intent | Speech: $speech")
-
         when (intent) {
             "introduce_yourself" -> {
                 TTSManager.speak(
-                    "Hi, I am AIDA. An Artificial Intelligence designed to assist with tasks such as note taking, alarm creation, creating calendar events, transcribing meetings, summarizing meetings, and searching online. I was created and developed by Mercado, Gil Yon, Knee Pie, Pasino, Ferrer, and Villareal. If you want me to assist you, don't forget to say my wake word."
+                    "Hi, I am eye the. an Artificial Intelligence designed to assist for common or redundant tasks such as note taking. alarm creation. creation of calendar event. transcribing a meeting. summarizing the meeting. and searching online. I am created and developed by these wonderful developers. Their names are. Mercado. Ah Gil Yon. Knee Pie. Pa see no. Ferrer. and Villareal. Finally. if you want me to assist you. don't forget to say"
                 )
             }
 
             "open_games" -> {
                 TTSManager.speak(gameResponses.random())
-                activity.openScreen(GameMenuScreen())
+
+                activity.
+                openScreen(GameMenuScreen())
             }
 
             "play_tic_tac_toe" -> {
