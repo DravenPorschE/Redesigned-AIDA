@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <!-- Event Date -->
+    <TextView
+        android:id="@+id/txtEventDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="May 18, 2025"
+        android:textColor="#00E7A2"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <!-- Event Note -->
+    <TextView
+        android:id="@+id/txtEventNote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="My Birthday"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        android:layout_marginTop="2dp" />
+
+</LinearLayout>

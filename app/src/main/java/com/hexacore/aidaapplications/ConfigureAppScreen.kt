@@ -1,6 +1,7 @@
 package com.hexacore.aidaapplications
 
 import android.content.Context
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -49,12 +50,13 @@ class ConfigureAppScreen : Fragment() {
     ): View? {
         val view = inflater.inflate(R.layout.configure_app_screen, container, false)
 
-        // Init buttons
+        val prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+
+        // --- Initialize UI ---
         btnChangeAvatar = view.findViewById(R.id.btnChangeAvatar)
         btnChangeTheme = view.findViewById(R.id.btnChangeTheme)
         btnRingtones = view.findViewById(R.id.btnRingtones)
 
-        // Avatar panel
         avatarPanel = view.findViewById(R.id.avatarPanel)
         avatarRecyclerView = view.findViewById(R.id.avatarRecyclerView)
         avatarActionButtons = view.findViewById(R.id.avatarActionButtons)
@@ -62,29 +64,31 @@ class ConfigureAppScreen : Fragment() {
         btnCancelAvatar = view.findViewById(R.id.btnCancelAvatar)
         selectedAvatarPreview = view.findViewById(R.id.selectedAvatarPreview)
 
-        // Theme panel
         themePanel = view.findViewById(R.id.themePanel)
         themeRadioGroup = view.findViewById(R.id.themeRadioGroup)
         btnSaveTheme = view.findViewById(R.id.btnSaveTheme)
         btnCancelTheme = view.findViewById(R.id.btnCancelTheme)
 
-        // Ringtone panel
         ringtonePanel = view.findViewById(R.id.ringtonePanel)
         ringtoneRadioGroup = view.findViewById(R.id.ringtoneRadioGroup)
         btnSaveRingtone = view.findViewById(R.id.btnSaveRingtone)
         btnCancelRingtone = view.findViewById(R.id.btnCancelRingtone)
 
-        // Preferences
-        val prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+        // --- Safe Avatar Setup ---
+        fun isDrawable(resId: Int): Boolean = try {
+            resources.getResourceTypeName(resId) == "drawable"
+        } catch (e: Resources.NotFoundException) {
+            false
+        }
 
-        // --- Avatar Setup (unchanged) ---
-        val savedAvatar = prefs.getInt("selected_avatar", -1)
-        if (savedAvatar != -1) {
+        val savedAvatar = prefs.getInt("selected_avatar", R.drawable.favatar1)
+        if (isDrawable(savedAvatar)) {
             selectedAvatarRes = savedAvatar
             selectedAvatarPreview.setImageResource(savedAvatar)
             selectedAvatarPreview.visibility = View.VISIBLE
         } else {
             selectedAvatarPreview.visibility = View.GONE
+            prefs.edit().putInt("selected_avatar", R.drawable.favatar1).apply()
         }
 
         val avatarList = listOf(
@@ -98,45 +102,36 @@ class ConfigureAppScreen : Fragment() {
         )
 
         adapter = AvatarAdapter(avatars = avatarList) { selectedAvatar ->
-            selectedAvatarRes = selectedAvatar
-            selectedAvatarPreview.setImageResource(selectedAvatar)
-            selectedAvatarPreview.visibility = View.VISIBLE
+            if (isDrawable(selectedAvatar)) {
+                selectedAvatarRes = selectedAvatar
+                selectedAvatarPreview.setImageResource(selectedAvatar)
+                selectedAvatarPreview.visibility = View.VISIBLE
+            }
         }
         avatarRecyclerView.layoutManager = GridLayoutManager(requireContext(), 3)
         avatarRecyclerView.adapter = adapter
 
-        btnChangeAvatar.setOnClickListener { toggleAvatarPanel() }
+        btnChangeAvatar.setOnClickListener { togglePanel(avatarPanel, ::isAvatarPanelVisible) { isAvatarPanelVisible = it } }
         btnSaveAvatar.setOnClickListener {
             selectedAvatarRes?.let { avatar ->
                 prefs.edit().putInt("selected_avatar", avatar).apply()
-                closeAvatarPanel()
+                closePanel(avatarPanel) { isAvatarPanelVisible = false }
                 Toast.makeText(requireContext(), "Avatar saved!", Toast.LENGTH_SHORT).show()
             } ?: Toast.makeText(requireContext(), "Please select an avatar", Toast.LENGTH_SHORT).show()
         }
-        btnCancelAvatar.setOnClickListener { closeAvatarPanel() }
+        btnCancelAvatar.setOnClickListener { closePanel(avatarPanel) { isAvatarPanelVisible = false } }
 
-        val btnAboutAida = view.findViewById<View>(R.id.btnAboutAida)
-        btnAboutAida.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .setCustomAnimations(android.R.anim.slide_in_left, android.R.anim.slide_out_right)
-                .replace((view.parent as ViewGroup).id, AboutAidaFragment())
-                .addToBackStack(null)
-                .commit()
-        }
-
-        // --- Theme Setup (Light/Dark/Blue/Green restored) ---
-        val savedTheme = prefs.getString("selected_theme", "Light")
+        // --- Theme Setup ---
+        val savedTheme = prefs.getString("selected_theme", "Light") ?: "Light"
         when (savedTheme) {
             "Light" -> themeRadioGroup.check(R.id.themeLight)
             "Dark" -> themeRadioGroup.check(R.id.themeDark)
             "Blue" -> themeRadioGroup.check(R.id.themeBlue)
             "Green" -> themeRadioGroup.check(R.id.themeGreen)
         }
-
-        btnChangeTheme.setOnClickListener { toggleThemePanel() }
+        btnChangeTheme.setOnClickListener { togglePanel(themePanel, ::isThemePanelVisible) { isThemePanelVisible = it } }
         btnSaveTheme.setOnClickListener {
-            val selectedId = themeRadioGroup.checkedRadioButtonId
-            val theme = when (selectedId) {
+            val theme = when (themeRadioGroup.checkedRadioButtonId) {
                 R.id.themeLight -> "Light"
                 R.id.themeDark -> "Dark"
                 R.id.themeBlue -> "Blue"
@@ -144,25 +139,23 @@ class ConfigureAppScreen : Fragment() {
                 else -> "Light"
             }
             prefs.edit().putString("selected_theme", theme).apply()
-            closeThemePanel()
+            closePanel(themePanel) { isThemePanelVisible = false }
             Toast.makeText(requireContext(), "Theme saved: $theme", Toast.LENGTH_SHORT).show()
             requireActivity().recreate()
         }
-        btnCancelTheme.setOnClickListener { closeThemePanel() }
+        btnCancelTheme.setOnClickListener { closePanel(themePanel) { isThemePanelVisible = false } }
 
-        // --- Ringtone Setup (4 choices restored) ---
+        // --- Ringtone Setup ---
         val savedRingtone = prefs.getInt("selected_ringtone", R.raw.ringtone1)
-        when (savedRingtone) {
-            R.raw.ringtone1 -> ringtoneRadioGroup.check(R.id.ringtoneClassic)
-            R.raw.ringtone2 -> ringtoneRadioGroup.check(R.id.ringtoneBeep)
-            R.raw.ringtone3 -> ringtoneRadioGroup.check(R.id.ringtoneGentle)
-            R.raw.ringtone4 -> ringtoneRadioGroup.check(R.id.ringtoneWav)
-        }
+        fun checkRingtone(id: Int, radioId: Int) { if (savedRingtone == id) ringtoneRadioGroup.check(radioId) }
+        checkRingtone(R.raw.ringtone1, R.id.ringtoneClassic)
+        checkRingtone(R.raw.ringtone2, R.id.ringtoneBeep)
+        checkRingtone(R.raw.ringtone3, R.id.ringtoneGentle)
+        checkRingtone(R.raw.ringtone4, R.id.ringtoneWav)
 
-        btnRingtones.setOnClickListener { toggleRingtonePanel() }
+        btnRingtones.setOnClickListener { togglePanel(ringtonePanel, ::isRingtonePanelVisible) { isRingtonePanelVisible = it } }
         btnSaveRingtone.setOnClickListener {
-            val selectedId = ringtoneRadioGroup.checkedRadioButtonId
-            val ringtone = when (selectedId) {
+            val ringtone = when (ringtoneRadioGroup.checkedRadioButtonId) {
                 R.id.ringtoneClassic -> R.raw.ringtone1
                 R.id.ringtoneBeep -> R.raw.ringtone2
                 R.id.ringtoneGentle -> R.raw.ringtone3
@@ -170,65 +163,30 @@ class ConfigureAppScreen : Fragment() {
                 else -> R.raw.ringtone1
             }
             prefs.edit().putInt("selected_ringtone", ringtone).apply()
-            closeRingtonePanel()
+            closePanel(ringtonePanel) { isRingtonePanelVisible = false }
             Toast.makeText(requireContext(), "Ringtone saved!", Toast.LENGTH_SHORT).show()
         }
-        btnCancelRingtone.setOnClickListener { closeRingtonePanel() }
+        btnCancelRingtone.setOnClickListener { closePanel(ringtonePanel) { isRingtonePanelVisible = false } }
 
         return view
     }
 
-    // ---- Avatar Panel Controls ----
-    private fun toggleAvatarPanel() {
-        if (!isAvatarPanelVisible) {
-            avatarPanel.visibility = View.VISIBLE
-            avatarPanel.translationX = avatarPanel.width.toFloat()
-            avatarPanel.animate().translationX(0f).setDuration(300).start()
+    // ---- Generic Panel Toggle ----
+    private fun togglePanel(panel: LinearLayout, isVisibleFlag: () -> Boolean, setFlag: (Boolean) -> Unit) {
+        if (!isVisibleFlag()) {
+            panel.visibility = View.VISIBLE
+            panel.translationX = panel.width.toFloat()
+            panel.animate().translationX(0f).setDuration(300).start()
         } else {
-            closeAvatarPanel()
+            closePanel(panel, setFlag)
         }
-        isAvatarPanelVisible = !isAvatarPanelVisible
+        setFlag(!isVisibleFlag())
     }
 
-    private fun closeAvatarPanel() {
-        avatarPanel.animate().translationX(avatarPanel.width.toFloat()).setDuration(300)
-            .withEndAction { avatarPanel.visibility = View.GONE }.start()
-        isAvatarPanelVisible = false
-    }
-
-    // ---- Theme Panel Controls ----
-    private fun toggleThemePanel() {
-        if (!isThemePanelVisible) {
-            themePanel.visibility = View.VISIBLE
-            themePanel.translationX = themePanel.width.toFloat()
-            themePanel.animate().translationX(0f).setDuration(300).start()
-        } else {
-            closeThemePanel()
-        }
-        isThemePanelVisible = !isThemePanelVisible
-    }
-
-    private fun closeThemePanel() {
-        themePanel.animate().translationX(themePanel.width.toFloat()).setDuration(300)
-            .withEndAction { themePanel.visibility = View.GONE }.start()
-        isThemePanelVisible = false
-    }
-
-    // ---- Ringtone Panel Controls ----
-    private fun toggleRingtonePanel() {
-        if (!isRingtonePanelVisible) {
-            ringtonePanel.visibility = View.VISIBLE
-            ringtonePanel.translationX = ringtonePanel.width.toFloat()
-            ringtonePanel.animate().translationX(0f).setDuration(300).start()
-        } else {
-            closeRingtonePanel()
-        }
-        isRingtonePanelVisible = !isRingtonePanelVisible
-    }
-
-    private fun closeRingtonePanel() {
-        ringtonePanel.animate().translationX(ringtonePanel.width.toFloat()).setDuration(300)
-            .withEndAction { ringtonePanel.visibility = View.GONE }.start()
-        isRingtonePanelVisible = false
+    private fun closePanel(panel: LinearLayout, setFlag: (Boolean) -> Unit) {
+        panel.animate().translationX(panel.width.toFloat()).setDuration(300)
+            .withEndAction { panel.visibility = View.GONE }
+            .start()
+        setFlag(false)
     }
 }

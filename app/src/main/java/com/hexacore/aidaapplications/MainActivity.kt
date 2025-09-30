@@ -134,42 +134,60 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Initialize draggable logic
-        draggableButton.setOnTouchListener { _, event ->
+        var isDragging = false
+
+        draggableButton.setOnTouchListener { v, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     lastX = event.rawX
+                    isDragging = false
+
+                    // Always reset to full opacity when touched
+                    draggableButton.animate().alpha(1f).setDuration(100).start()
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
+                    isDragging = true
+
+                    // Keep button fully visible while dragging
+                    if (draggableButton.alpha != 1f) {
+                        draggableButton.alpha = 1f
+                    }
+
                     val dx = event.rawX - lastX
                     if (isPortrait()) {
-                        // Portrait: panel on right, drag left to show
                         val screenWidth = resources.displayMetrics.widthPixels.toFloat()
                         val panelWidth = scrollSidePanel.width.toFloat()
-
-                        // New X for draggable button
                         var newButtonX = draggableButton.x + dx
-                        // Clamp button between (screenWidth - panelWidth - button width) and (screenWidth - button width)
                         val minX = screenWidth - panelWidth - draggableButton.width
                         val maxX = screenWidth - draggableButton.width
                         newButtonX = newButtonX.coerceIn(minX, maxX)
                         draggableButton.x = newButtonX
-
-                        // Panel X is button's right edge
                         scrollSidePanel.x = newButtonX + draggableButton.width
                     } else {
-                        // Landscape: resize panel width
                         resizeSidePanel(dx)
                     }
                     lastX = event.rawX
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (!isDragging) {
+                        v.performClick()
+                    }
+
+                    // Fade back after 1s
+                    draggableButton.animate()
+                        .alpha(0.4f)
+                        .setStartDelay(1000)
+                        .setDuration(500)
+                        .start()
                     true
                 }
                 else -> false
             }
         }
 
-        // Optional click to toggle
+
         draggableButton.setOnClickListener {
             if (isPortrait()) {
                 val screenWidth = resources.displayMetrics.widthPixels.toFloat()
@@ -181,6 +199,7 @@ class MainActivity : AppCompatActivity() {
                 scrollSidePanel.animate().x(targetButtonX + draggableButton.width).setDuration(200).start()
             }
         }
+
 
         // Set initial positions
         if (isPortrait()) {
@@ -238,6 +257,7 @@ class MainActivity : AppCompatActivity() {
         noteButton.setOnClickListener { resetSidePanel(); replaceFragment(NoteAppScreen(), "Note") }
         alarmButton.setOnClickListener { resetSidePanel(); replaceFragment(AlarmAppScreen(), "Alarm") }
         configureButton.setOnClickListener { resetSidePanel(); replaceFragment(ConfigureAppScreen(), "Config") }
+        calendarButton.setOnClickListener { resetSidePanel(); replaceFragment(CalendarAppScreen(), "Calendar") }
 
         /*
 
@@ -270,7 +290,6 @@ class MainActivity : AppCompatActivity() {
 
 
          */
-
 
 
         // Initialize WakeWordManager with the wake word callback
@@ -524,5 +543,4 @@ class MainActivity : AppCompatActivity() {
             .replace(R.id.main_content, fragment)
             .commit()
     }
-
 }

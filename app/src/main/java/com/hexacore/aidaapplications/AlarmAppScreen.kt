@@ -5,6 +5,8 @@ import android.app.PendingIntent
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -159,13 +161,18 @@ class AlarmAppScreen : Fragment() {
     }
 
     private fun confirmDelete(position: Int) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Delete Alarm")
-            .setMessage("Delete alarm at ${alarms[position].time}?")
-            .setPositiveButton("Yes") { _, _ -> deleteAlarm(position) }
-            .setNegativeButton("No", null)
-            .show()
+        if (position in alarms.indices) {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Delete Alarm")
+                .setMessage("Delete alarm at ${alarms[position].time}?")
+                .setPositiveButton("Yes") { _, _ -> deleteAlarm(position) }
+                .setNegativeButton("No", null)
+                .show()
+        } else {
+            Toast.makeText(requireContext(), "Invalid alarm selected", Toast.LENGTH_SHORT).show()
+        }
     }
+
 
     private fun deleteAlarm(position: Int) {
         val alarm = alarms[position]
@@ -241,14 +248,8 @@ class AlarmAppScreen : Fragment() {
     }
 
     private fun scheduleAlarm(alarm: AlarmItem) {
-        val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-            if (!alarmManager.canScheduleExactAlarms()) {
-                Toast.makeText(requireContext(), "Exact alarms are not allowed. Please enable in system settings.", Toast.LENGTH_LONG).show()
-                return
-            }
-        }
+        val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
         val parts = alarm.time.split(" ")
         val hm = parts[0].split(":")
@@ -282,17 +283,45 @@ class AlarmAppScreen : Fragment() {
             )
 
             try {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    calendar.timeInMillis,
-                    pendingIntent
-                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (alarmManager.canScheduleExactAlarms()) {
+                        alarmManager.setExactAndAllowWhileIdle(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            pendingIntent
+                        )
+                    } else {
+                        // Redirect user to enable exact alarms in system settings
+                        Toast.makeText(
+                            requireContext(),
+                            "Exact alarms disabled. Please allow in settings.",
+                            Toast.LENGTH_LONG
+                        ).show()
+
+                        val settingsIntent = Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                            data = Uri.parse("package:" + requireContext().packageName)
+                        }
+                        requireContext().startActivity(settingsIntent)
+
+                        // Fallback to inexact alarm
+                        alarmManager.set(
+                            AlarmManager.RTC_WAKEUP,
+                            calendar.timeInMillis,
+                            pendingIntent
+                        )
+                    }
+                } else {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        calendar.timeInMillis,
+                        pendingIntent
+                    )
+                }
             } catch (e: SecurityException) {
                 Toast.makeText(requireContext(), "Exact alarm scheduling requires permission.", Toast.LENGTH_LONG).show()
             }
         }
     }
-
 
     private fun cancelAlarm(alarm: AlarmItem) {
         val alarmManager = requireContext().getSystemService(Context.ALARM_SERVICE) as AlarmManager

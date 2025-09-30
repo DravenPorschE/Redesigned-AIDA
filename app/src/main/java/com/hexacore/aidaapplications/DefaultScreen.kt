@@ -23,7 +23,12 @@ class DefaultScreen : Fragment() {
         // Load saved avatar from SharedPreferences
         val prefs = requireActivity().getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         val savedAvatar = prefs.getInt("selected_avatar", R.drawable.avatar_aida) // fallback avatar
-        avatarAidaImage.setImageResource(savedAvatar)
+        if (resources.getResourceTypeName(savedAvatar) == "drawable") {
+            avatarAidaImage.setImageResource(savedAvatar)
+        } else {
+            avatarAidaImage.setImageResource(R.drawable.avatar_aida) // fallback
+        }
+
 
         return view
     }

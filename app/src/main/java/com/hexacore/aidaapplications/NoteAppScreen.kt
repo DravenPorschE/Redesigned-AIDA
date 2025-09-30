@@ -62,31 +62,28 @@ class NoteAppScreen : Fragment() {
     }
 
     private fun saveNotes() {
-        val file = requireContext().getFileStreamPath(fileName)
-        file.printWriter().use { out ->
-            for (note in notes) {
-                // Store as "title||info" per line
-                out.println("${note.title}||${note.info}")
-            }
-        }
+        NoteStorage.saveNotes(requireContext(), notes)
     }
 
     private fun loadNotes() {
-        val file = requireContext().getFileStreamPath(fileName)
-        if (file.exists()) {
-            file.bufferedReader().useLines { lines ->
-                lines.forEach { line ->
-                    val parts = line.split("||")
-                    if (parts.size == 2) {
-                        notes.add(Note(parts[0], parts[1]))
-                    }
-                }
-            }
-        }
+        notes.clear()
+        notes.addAll(NoteStorage.loadNotes(requireContext()))
     }
 
     override fun onPause() {
         super.onPause()
         saveNotes() // ✅ Auto-save when app goes to background
     }
+
+    override fun onResume() {
+        super.onResume()
+        reloadNotes()
+    }
+
+    fun reloadNotes() {
+        notes.clear()
+        notes.addAll(NoteStorage.loadNotes(requireContext()))
+        noteAdapter.notifyDataSetChanged()
+    }
+
 }
